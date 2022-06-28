@@ -11,7 +11,7 @@ import (
 	"github.com/kataras/iris/v12/middleware/jwt"
 )
 
-type BitCryContext struct {
+type Contextx struct {
 	iris.Context
 }
 
@@ -23,7 +23,7 @@ func GetJSONSerializer() jsoniter.API {
 	return json
 }
 
-func (c *BitCryContext) ReadJSON(outPtr interface{}) error {
+func (c *Contextx) ReadJSON(outPtr interface{}) error {
 	body, restoreBody, err := context.GetBody(c.Request(), true)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (c *BitCryContext) ReadJSON(outPtr interface{}) error {
 	}
 	return c.Application().Validate(outPtr)
 }
-func (c *BitCryContext) ReadQuery(ptr interface{}) error {
+func (c *Contextx) ReadQuery(ptr interface{}) error {
 	values := c.Request().URL.Query()
 	if len(values) == 0 {
 		if c.Application().ConfigurationReadOnly().GetFireEmptyFormError() {
@@ -52,7 +52,7 @@ func (c *BitCryContext) ReadQuery(ptr interface{}) error {
 	return c.Application().Validate(ptr)
 }
 
-func (c *BitCryContext) ReadForm(formObject interface{}) error {
+func (c *Contextx) ReadForm(formObject interface{}) error {
 	values := c.FormValues()
 	if len(values) == 0 {
 		if c.Application().ConfigurationReadOnly().GetFireEmptyFormError() {
@@ -71,7 +71,7 @@ func (c *BitCryContext) ReadForm(formObject interface{}) error {
 	return c.Application().Validate(formObject)
 }
 
-func (c *BitCryContext) JSON(v interface{}) error {
+func (c *Contextx) JSON(v interface{}) error {
 	bs, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -81,26 +81,26 @@ func (c *BitCryContext) JSON(v interface{}) error {
 	return err
 }
 
-func (c *BitCryContext) OK(data interface{}) error {
+func (c *Contextx) OK(data interface{}) error {
 	r := OK(data)
 	return c.JSON(r)
 }
 
-func (c *BitCryContext) Fail(message string, state, httpStatus int) error {
+func (c *Contextx) Fail(message string, state, httpStatus int) error {
 	c.StatusCode(httpStatus)
 	return c.JSON(commons.Result{State: state, Message: message})
 }
 
-func (c *BitCryContext) Error(err error) error {
+func (c *Contextx) Error(err error) error {
 	return c.JSON(HandleError(err))
 }
 
-func (c *BitCryContext) ErrorService(err error) error {
+func (c *Contextx) ErrorService(err error) error {
 	c.StatusCode(406)
 	return c.JSON(HandleError(err))
 }
 
-func (c *BitCryContext) ErrorParam(err error) error {
+func (c *Contextx) ErrorParam(err error) error {
 	c.StatusCode(400)
 	if es, ok := err.(validator.ValidationErrors); ok {
 		fieldErrors := make(map[string]string, len(es))
@@ -112,7 +112,7 @@ func (c *BitCryContext) ErrorParam(err error) error {
 	return c.JSON(commons.Result{State: states.InvalidParam, Message: err.Error()})
 }
 
-func (c *BitCryContext) GetUID() string {
+func (c *Contextx) GetUID() string {
 	claims := jwt.Get(c.Context).(*RbacClaims)
 	if claims == nil {
 		return ""
@@ -120,7 +120,7 @@ func (c *BitCryContext) GetUID() string {
 	return claims.Subject
 }
 
-func (c *BitCryContext) IsLogined() bool {
+func (c *Contextx) IsLogined() bool {
 	t := jwt.Get(c.Context)
 	if t == nil {
 		return false
