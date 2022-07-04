@@ -94,6 +94,12 @@ func (c *Contextx) Fail(message string, state, httpStatus int) error {
 }
 
 func (c *Contextx) Error(err error) error {
+	switch v := err.(type) {
+	case *commons.ServiceError:
+		return c.ErrorService(v)
+	default:
+		c.StatusCode(500)
+	}
 	return c.JSON(HandleError(err))
 }
 

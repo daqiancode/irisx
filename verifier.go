@@ -66,7 +66,7 @@ type RbacMiddleware struct {
 	roles []string
 }
 
-func NewRbacMiddleware(roles []string) *RbacMiddleware {
+func NewRbacMiddleware(roles ...string) *RbacMiddleware {
 	return &RbacMiddleware{
 		roles: roles,
 	}
