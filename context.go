@@ -1,6 +1,8 @@
 package irisx
 
 import (
+	"strings"
+
 	"github.com/daqiancode/gocommons/commons"
 	"github.com/daqiancode/gocommons/commons/states"
 	"github.com/daqiancode/jsoniter"
@@ -101,15 +103,20 @@ func (c *Contextx) ErrorService(err error) error {
 }
 
 func (c *Contextx) ErrorParam(err error) error {
-	c.StatusCode(400)
 	if es, ok := err.(validator.ValidationErrors); ok {
 		fieldErrors := make(map[string]string, len(es))
 		for _, v := range es {
-			fieldErrors[v.Field()] = v.Error()
+			fieldErrors[v.Field()] = v.ActualTag()
+			// fieldErrors[v.Field()] = v.Error()
 		}
-		return c.JSON(commons.Result{State: states.InvalidParam, Message: "request parameter error", FieldErrors: fieldErrors})
+		return c.ErrorFields(fieldErrors)
 	}
+	c.StatusCode(400)
 	return c.JSON(commons.Result{State: states.InvalidParam, Message: err.Error()})
+}
+func (c *Contextx) ErrorFields(fieldErrors map[string]string) error {
+	c.StatusCode(400)
+	return c.JSON(commons.Result{State: states.InvalidParam, Message: "request parameter error", FieldErrors: fieldErrors})
 }
 
 func (c *Contextx) GetUID() string {
@@ -130,4 +137,11 @@ func (c *Contextx) IsLogined() bool {
 		return len(claims.Subject) > 0
 	}
 	return false
+}
+func (c *Contextx) GetIP() string {
+	ip := c.GetHeader("X-Forwarded-For")
+	if ip != "" {
+		return strings.TrimSpace(strings.Split(ip, ",")[0])
+	}
+	return c.Context.RemoteAddr()
 }

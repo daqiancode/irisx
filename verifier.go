@@ -23,7 +23,7 @@ func processPublicKey(publicKey string) string {
 
 //NewVerifier please use ECDSA alg
 func NewVerifier(publicKey string, alg jwt.Alg) *Verifier {
-	pk, err := jwt.ParsePublicKeyECDSA([]byte(processPublicKey(publicKey)))
+	pk, err := jwt.ParsePublicKeyEdDSA([]byte(processPublicKey(publicKey)))
 	if err != nil {
 		panic(err)
 	}
