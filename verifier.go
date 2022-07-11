@@ -40,7 +40,7 @@ func (v *Verifier) SetBlockList(blocklist *redis.Blocklist) {
 	v.verifier.Blocklist = blocklist
 }
 
-func (v *Verifier) GetMiddleware(validators ...jwt.TokenValidator) context.Handler {
+func (v *Verifier) Middleware(validators ...jwt.TokenValidator) context.Handler {
 	return v.verifier.Verify(func() interface{} {
 		return new(RbacClaims)
 	}, validators...)
