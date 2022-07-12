@@ -100,6 +100,22 @@ func (c *Contextx) Fail(message string, state, httpStatus int) error {
 	return c.JSON(commons.Result{State: state, Message: message})
 }
 
+// server internal error
+func (c *Contextx) FailInternal(message string, state int) error {
+	return c.Fail(message, state, 500)
+}
+
+//bussiness logic error
+func (c *Contextx) FailService(message string, state int) error {
+	return c.Fail(message, state, 406)
+}
+
+//request parameter error
+func (c *Contextx) FailParams(fieldErrors map[string]string) error {
+	c.StatusCode(400)
+	return c.JSON(commons.Result{State: states.InvalidParam, Message: "request parameter error", FieldErrors: fieldErrors})
+}
+
 func (c *Contextx) Error(err error) error {
 	switch v := err.(type) {
 	case *commons.ServiceError:
@@ -112,11 +128,13 @@ func (c *Contextx) Error(err error) error {
 	return c.JSON(HandleError(err))
 }
 
+//bussiness logic error
 func (c *Contextx) ErrorService(err error) error {
 	c.StatusCode(406)
 	return c.JSON(HandleError(err))
 }
 
+//request parameter error
 func (c *Contextx) ErrorParam(err error) error {
 	if es, ok := err.(validator.ValidationErrors); ok {
 		fieldErrors := make(map[string]string, len(es))
@@ -124,14 +142,10 @@ func (c *Contextx) ErrorParam(err error) error {
 			fieldErrors[v.Field()] = v.ActualTag()
 			// fieldErrors[v.Field()] = v.Error()
 		}
-		return c.ErrorFields(fieldErrors)
+		return c.FailParams(fieldErrors)
 	}
 	c.StatusCode(400)
 	return c.JSON(commons.Result{State: states.InvalidParam, Message: err.Error()})
-}
-func (c *Contextx) ErrorFields(fieldErrors map[string]string) error {
-	c.StatusCode(400)
-	return c.JSON(commons.Result{State: states.InvalidParam, Message: "request parameter error", FieldErrors: fieldErrors})
 }
 
 func (c *Contextx) GetUID() string {
