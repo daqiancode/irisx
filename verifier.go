@@ -46,17 +46,31 @@ func (v *Verifier) Middleware(validators ...jwt.TokenValidator) context.Handler 
 	}, validators...)
 }
 
+//findRole: ([user,admin],[user])->OK ,([seller*],[seller:sales]) -> OK
 func findRole(giveRoles, myRoles []string) bool {
 	if len(giveRoles) == 0 {
 		return true
 	}
+	var prefixRoles []string
 	giveRolesMap := make(map[string]bool, len(giveRoles))
 	for _, v := range giveRoles {
 		giveRolesMap[v] = true
+		if v[len(v)-1] == '*' {
+			prefixRoles = append(prefixRoles, v[0:len(v)-1])
+		}
 	}
 	for _, v := range myRoles {
 		if giveRolesMap[v] {
 			return true
+		}
+	}
+	if len(prefixRoles) > 0 {
+		for _, x := range myRoles {
+			for _, v := range prefixRoles {
+				if strings.HasPrefix(x, v) {
+					return true
+				}
+			}
 		}
 	}
 	return false
@@ -76,7 +90,8 @@ func (s *RbacMiddleware) Middleware(ctx iris.Context) {
 	claims := jwt.Get(ctx).(*RbacClaims)
 	roles := strings.Split(claims.Roles, " ")
 	if !findRole(s.roles, roles) {
-		ctx.StopWithJSON(iris.StatusForbidden, "Forbidden")
+		ctx.StopWithText(iris.StatusForbidden, "Forbidden")
+		return
 	}
 	ctx.Next()
 }
