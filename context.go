@@ -90,6 +90,14 @@ func (c *Contextx) JSON(v interface{}) error {
 	return err
 }
 
+func (c *Contextx) Finish(data interface{}, err error) error {
+	if err != nil {
+		c.Error(err)
+		return err
+	}
+	return c.OK(data)
+}
+
 func (c *Contextx) OK(data interface{}) error {
 	r := OK(data)
 	return c.JSON(r)
