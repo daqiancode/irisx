@@ -19,6 +19,8 @@ github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534/go.mod h1
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/daqiancode/gocommons v0.0.0-20220704074802-0b861af1e568 h1:hYgeGgDE7XkPVhhICBS13c9Dg3TJLRc6NJTwJDMiPDQ=
 github.com/daqiancode/gocommons v0.0.0-20220704074802-0b861af1e568/go.mod h1:tYORJowGRlfGhr/AFOg7GJuGHCI+sMC3L6Gfx6nZMwU=
+github.com/daqiancode/gocommons v0.0.0-20220804093606-679735829e06 h1:4DDgwBQVgGpVPpT1hgBaVFNM2kcjXGbIWYDa2b+oHCM=
+github.com/daqiancode/gocommons v0.0.0-20220804093606-679735829e06/go.mod h1:Ji6ktJ0AjBmXxnbUFI9Siw/UDGrk2n6cX++/aUIxOMQ=
 github.com/daqiancode/jsoniter v1.1.13 h1:7/EhqKSIIfspeY/CChk0fi2nZcnfbuCKHDGcF4As588=
 github.com/daqiancode/jsoniter v1.1.13/go.mod h1:zvsXvJyVeNzqXpytajJCJTKpb4IgRyfw9pIl4ECwqVY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

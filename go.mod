@@ -3,7 +3,7 @@ module github.com/daqiancode/irisx
 go 1.18
 
 require (
-	github.com/daqiancode/gocommons v0.0.0-20220704074802-0b861af1e568
+	github.com/daqiancode/gocommons v0.0.0-20220804093606-679735829e06
 	github.com/daqiancode/jsoniter v1.1.13
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/iris-contrib/schema v0.0.6

@@ -98,6 +98,14 @@ func (c *Contextx) Finish(data interface{}, err error) error {
 	return c.OK(data)
 }
 
+func (c *Contextx) Page(items interface{}, pageIndex, pageSize int, total int64, err error) error {
+	if err != nil {
+		c.Error(err)
+		return err
+	}
+	return c.OK(commons.Page{PageIndex: pageIndex, PageSize: pageSize, Total: int(total), Items: items})
+}
+
 func (c *Contextx) OK(data interface{}) error {
 	r := OK(data)
 	return c.JSON(r)
