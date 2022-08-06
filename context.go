@@ -133,6 +133,9 @@ func (c *Contextx) FailParams(fieldErrors map[string]string) error {
 }
 
 func (c *Contextx) Error(err error) error {
+	if err == nil {
+		return c.OK(nil)
+	}
 	switch v := err.(type) {
 	case *commons.ServiceError:
 		IrisxLog.Error().Err(err).Msg("Contextx.Error - Service error:" + v.Error())
