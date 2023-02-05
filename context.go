@@ -1,7 +1,6 @@
 package irisx
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/daqiancode/jsoniter"
@@ -66,7 +65,7 @@ func (c *Contextx) ReadForm(formObject interface{}) error {
 }
 
 func (c *Contextx) JSON(v interface{}) error {
-	bs, err := json.Marshal(v)
+	bs, err := JSON.Marshal(v)
 	if err != nil {
 		return err
 	}
