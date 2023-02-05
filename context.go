@@ -1,43 +1,30 @@
 package irisx
 
 import (
+	"encoding/json"
 	"strings"
 
-	"github.com/daqiancode/gocommons/commons"
-	"github.com/daqiancode/gocommons/commons/states"
-	"github.com/daqiancode/gocommons/logger"
 	"github.com/daqiancode/jsoniter"
 	"github.com/go-playground/validator/v10"
 	"github.com/iris-contrib/schema"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
-	"github.com/kataras/iris/v12/middleware/jwt"
 )
 
 type Contextx struct {
 	iris.Context
 }
 
-var IrisxLog = logger.NewLogger(map[string]string{"src": "irisx"}, true, false)
-
-var (
-	json = jsoniter.Decapitalized
-)
-
-func GetJSONSerializer() jsoniter.API {
-	return json
-}
+var JSON = jsoniter.Decapitalized
 
 func (c *Contextx) ReadJSON(outPtr interface{}) error {
 	body, restoreBody, err := context.GetBody(c.Request(), true)
 	if err != nil {
-		IrisxLog.Error().Err(err).Msg("Contextx.ReadJSON failed")
 		return err
 	}
 	restoreBody()
-	err = json.Unmarshal(body, outPtr)
+	err = JSON.Unmarshal(body, outPtr)
 	if err != nil {
-		IrisxLog.Error().Err(err).Msg("Contextx.ReadJSON - json.Unmarshal failed")
 		return err
 	}
 	return c.Application().Validate(outPtr)
@@ -53,7 +40,6 @@ func (c *Contextx) ReadQuery(ptr interface{}) error {
 
 	err := schema.DecodeQuery(values, ptr)
 	if err != nil {
-		IrisxLog.Error().Err(err).Msg("Contextx.ReadQuery - DecodeQuery failed")
 		return err
 	}
 
@@ -74,7 +60,6 @@ func (c *Contextx) ReadForm(formObject interface{}) error {
 
 	err := schema.DecodeForm(values, formObject)
 	if err != nil {
-		IrisxLog.Error().Err(err).Msg("Contextx.ReadForm - DecodeForm failed")
 		return err
 	}
 	return c.Application().Validate(formObject)
@@ -92,7 +77,7 @@ func (c *Contextx) JSON(v interface{}) error {
 
 func (c *Contextx) Finish(data interface{}, err error) error {
 	if err != nil {
-		c.Error(err)
+		c.Error(err, 500)
 		return err
 	}
 	return c.OK(data)
@@ -100,20 +85,19 @@ func (c *Contextx) Finish(data interface{}, err error) error {
 
 func (c *Contextx) Page(items interface{}, pageIndex, pageSize int, total int64, err error) error {
 	if err != nil {
-		c.Error(err)
+		c.Error(err, 500)
 		return err
 	}
-	return c.OK(commons.Page{PageIndex: pageIndex, PageSize: pageSize, Total: int(total), Items: items})
+	return c.OK(Page{PageIndex: pageIndex, PageSize: pageSize, Total: int(total), Items: items})
 }
 
 func (c *Contextx) OK(data interface{}) error {
-	r := OK(data)
-	return c.JSON(r)
+	return c.JSON(Result{Data: data})
 }
 
 func (c *Contextx) Fail(message string, state, httpStatus int) error {
 	c.StatusCode(httpStatus)
-	return c.JSON(commons.Result{State: state, Message: message})
+	return c.JSON(Result{State: state, ErrorCode: message})
 }
 
 // server internal error
@@ -121,39 +105,26 @@ func (c *Contextx) FailInternal(message string, state int) error {
 	return c.Fail(message, state, 500)
 }
 
-//bussiness logic error
+// bussiness logic error
 func (c *Contextx) FailService(message string, state int) error {
 	return c.Fail(message, state, 406)
 }
 
-//request parameter error
+// request parameter error
 func (c *Contextx) FailParams(fieldErrors map[string]string) error {
 	c.StatusCode(400)
-	return c.JSON(commons.Result{State: states.InvalidParam, Message: "request parameter error", FieldErrors: fieldErrors})
+	return c.JSON(Result{State: 1, ErrorCode: "request parameter error", FieldErrors: fieldErrors})
 }
 
-func (c *Contextx) Error(err error) error {
+func (c *Contextx) Error(err error, statusCode int) error {
 	if err == nil {
 		return c.OK(nil)
 	}
-	switch v := err.(type) {
-	case *commons.ServiceError:
-		IrisxLog.Error().Err(err).Msg("Contextx.Error - Service error:" + v.Error())
-		return c.ErrorService(v)
-	default:
-		IrisxLog.Error().Err(err).Msg("Contextx.Error - Internal error:" + err.Error())
-		c.StatusCode(500)
-	}
-	return c.JSON(HandleError(err))
+	c.StatusCode(statusCode)
+	return c.JSON(Result{State: 1, Error: err.Error()})
 }
 
-//bussiness logic error
-func (c *Contextx) ErrorService(err error) error {
-	c.StatusCode(406)
-	return c.JSON(HandleError(err))
-}
-
-//request parameter error
+// request parameter error
 func (c *Contextx) ErrorParam(err error) error {
 	if es, ok := err.(validator.ValidationErrors); ok {
 		fieldErrors := make(map[string]string, len(es))
@@ -164,32 +135,16 @@ func (c *Contextx) ErrorParam(err error) error {
 		return c.FailParams(fieldErrors)
 	}
 	c.StatusCode(400)
-	return c.JSON(commons.Result{State: states.InvalidParam, Message: err.Error()})
+	return c.JSON(Result{State: 1, Error: err.Error()})
 }
 
-func (c *Contextx) GetUID() string {
-	claims := jwt.Get(c.Context).(*RbacClaims)
-	if claims == nil {
-		return ""
-	}
-	return claims.Subject
-}
-
-func (c *Contextx) IsLogined() bool {
-	t := jwt.Get(c.Context)
-	if t == nil {
-		return false
-	}
-
-	if claims, ok := t.(*RbacClaims); ok {
-		return len(claims.Subject) > 0
-	}
-	return false
-}
 func (c *Contextx) GetIP() string {
-	ip := c.GetHeader("X-Forwarded-For")
-	if ip != "" {
-		return strings.TrimSpace(strings.Split(ip, ",")[0])
+	ip := c.GetHeader("X-Real-Ip")
+	if ip == "" {
+		ip = c.GetHeader("X-Forwarded-For")
+		if ip != "" {
+			return strings.TrimSpace(strings.Split(ip, ",")[0])
+		}
 	}
 	return c.Context.RemoteAddr()
 }

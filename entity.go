@@ -1,26 +1,16 @@
 package irisx
 
-import (
-	"github.com/daqiancode/gocommons/commons"
-	"github.com/daqiancode/gocommons/commons/states"
-)
-
-func OK(data interface{}) commons.Result {
-	return commons.Result{
-		State: 0,
-		Data:  data,
-	}
+type Result struct {
+	State       int               `json:"state"`
+	Data        interface{}       `json:"data,omitempty"`
+	ErrorCode   string            `json:"errorCode,omitempty"`
+	Error       string            `json:"error,omitempty"`
+	FieldErrors map[string]string `json:"fieldErrors,omitempty"`
 }
 
-func HandleError(err error) commons.Result {
-	if err == nil {
-		return commons.Result{State: 0}
-	}
-	if e, ok := err.(*commons.ServiceError); ok {
-		IrisxLog.Error().Err(err).Msg("Contextx.Error - Service error:" + e.Error())
-		return commons.Result{State: states.ServiceError, Message: e.Message}
-	}
-	IrisxLog.Error().Err(err).Msg("Contextx.Error - Server internal error:" + err.Error())
-
-	return commons.Result{State: states.InternalError, Message: err.Error()}
+type Page struct {
+	PageIndex int         `json:"pageIndex"`
+	PageSize  int         `json:"pageSize"`
+	Total     int         `json:"total"`
+	Items     interface{} `json:"items"`
 }

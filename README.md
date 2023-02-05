@@ -12,10 +12,23 @@ go get github.com/daqiancode/irisx
 ## Example
 
 ```go
-v := irisx.NewVerifier(env.Getenv("jwt_public_key"), jwt.EdDSA)
-mvcApp := mvc.New(app).Party(env.Getenv("app_prefix", "/"))
-mvcApp.Party("/").Handle(new(controller.PublicController))
-mvcApp.Party("/user", v.Middleware(), irisx.NewRbacMiddleware("USER").Middleware).Handle(new(controller.UserController))
-mvcApp.Party("/admin/user", v.Middleware(), irisx.NewRbacMiddleware("ADMIN").Middleware).Handle(new(controller.AdminUserController))
+func setupDependencies(app *iris.Application) {
+	app.RegisterDependency(func(ctx iris.Context) irisx.Contextx {
+		return irisx.Contextx{Context: ctx}
+	})
+	app.RegisterDependency(new(service.Users))
+}
+
+
+
+type UserController struct {
+	Ctx              irisx.Contextx
+	Users            *service.Users
+	SignupEmailCodes *service.SignupEmailCodes
+}
+func (c *UserController) Get() {
+	uid := c.Ctx.GetUID()
+	c.Ctx.OK(c.Users.Get(uid))
+}
 
 ```
