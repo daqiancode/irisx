@@ -10,13 +10,13 @@ import (
 	"github.com/kataras/iris/v12/context"
 )
 
-type Contextx struct {
+type Context struct {
 	iris.Context
 }
 
 var JSON = jsoniter.Decapitalized
 
-func (c *Contextx) ReadJSON(outPtr interface{}) error {
+func (c *Context) ReadJSON(outPtr interface{}) error {
 	body, restoreBody, err := context.GetBody(c.Request(), true)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func (c *Contextx) ReadJSON(outPtr interface{}) error {
 	}
 	return c.Application().Validate(outPtr)
 }
-func (c *Contextx) ReadQuery(ptr interface{}) error {
+func (c *Context) ReadQuery(ptr interface{}) error {
 	values := c.Request().URL.Query()
 	if len(values) == 0 {
 		if c.Application().ConfigurationReadOnly().GetFireEmptyFormError() {
@@ -45,7 +45,7 @@ func (c *Contextx) ReadQuery(ptr interface{}) error {
 	return c.Application().Validate(ptr)
 }
 
-func (c *Contextx) ReadForm(formObject interface{}) error {
+func (c *Context) ReadForm(formObject interface{}) error {
 	values := c.FormValues()
 	if len(values) == 0 {
 		if c.Application().ConfigurationReadOnly().GetFireEmptyFormError() {
@@ -64,7 +64,7 @@ func (c *Contextx) ReadForm(formObject interface{}) error {
 	return c.Application().Validate(formObject)
 }
 
-func (c *Contextx) JSON(v interface{}) error {
+func (c *Context) JSON(v interface{}) error {
 	bs, err := JSON.Marshal(v)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (c *Contextx) JSON(v interface{}) error {
 	return err
 }
 
-func (c *Contextx) Finish(data interface{}, err error) error {
+func (c *Context) Finish(data interface{}, err error) error {
 	if err != nil {
 		c.Error(err)
 		return err
@@ -82,7 +82,7 @@ func (c *Contextx) Finish(data interface{}, err error) error {
 	return c.OK(data)
 }
 
-func (c *Contextx) Page(items interface{}, pageIndex, pageSize, total int, err error) error {
+func (c *Context) Page(items interface{}, pageIndex, pageSize, total int, err error) error {
 	if err != nil {
 		c.Error(err)
 		return err
@@ -90,32 +90,32 @@ func (c *Contextx) Page(items interface{}, pageIndex, pageSize, total int, err e
 	return c.OK(NewPage(items, pageIndex, pageSize, total))
 }
 
-func (c *Contextx) OK(data interface{}) error {
+func (c *Context) OK(data interface{}) error {
 	return c.JSON(Result{Data: data})
 }
 
-func (c *Contextx) Fail(message string, state, httpStatus int) error {
+func (c *Context) Fail(message string, state, httpStatus int) error {
 	c.StatusCode(httpStatus)
 	return c.JSON(Result{State: state, ErrorCode: message})
 }
 
 // server internal error
-func (c *Contextx) FailInternal(message string, state int) error {
+func (c *Context) FailInternal(message string, state int) error {
 	return c.Fail(message, state, 500)
 }
 
 // bussiness logic error
-func (c *Contextx) FailService(message string, state int) error {
+func (c *Context) FailService(message string, state int) error {
 	return c.Fail(message, state, 406)
 }
 
 // request parameter error
-func (c *Contextx) FailParams(fieldErrors map[string]string) error {
+func (c *Context) FailParams(fieldErrors map[string]string) error {
 	c.StatusCode(400)
 	return c.JSON(Result{State: 1, Error: "request parameter error", FieldErrors: fieldErrors})
 }
 
-func (c *Contextx) Error(err error) error {
+func (c *Context) Error(err error) error {
 	if err == nil {
 		return c.OK(nil)
 	}
@@ -139,7 +139,7 @@ func (c *Contextx) Error(err error) error {
 }
 
 // request parameter error
-func (c *Contextx) ErrorParam(err error) error {
+func (c *Context) ErrorParam(err error) error {
 	if es, ok := err.(validator.ValidationErrors); ok {
 		fieldErrors := make(map[string]string, len(es))
 		for _, v := range es {
@@ -151,7 +151,7 @@ func (c *Contextx) ErrorParam(err error) error {
 	return c.Error(err)
 }
 
-func (c *Contextx) GetIP() string {
+func (c *Context) GetIP() string {
 	ip := c.GetHeader("X-Real-Ip")
 	if ip == "" {
 		ip = c.GetHeader("X-Forwarded-For")
