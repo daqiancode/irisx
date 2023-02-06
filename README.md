@@ -13,8 +13,8 @@ go get github.com/daqiancode/irisx
 
 ```go
 func setupDependencies(app *iris.Application) {
-	app.RegisterDependency(func(ctx iris.Context) irisx.Contextx {
-		return irisx.Contextx{Context: ctx}
+	app.RegisterDependency(func(ctx iris.Context) irisx.Context {
+		return irisx.Context{Context: ctx}
 	})
 	app.RegisterDependency(new(service.Users))
 }
@@ -22,7 +22,7 @@ func setupDependencies(app *iris.Application) {
 
 
 type UserController struct {
-	Ctx              irisx.Contextx
+	Ctx              irisx.Context
 	Users            *service.Users
 	SignupEmailCodes *service.SignupEmailCodes
 }
