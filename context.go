@@ -76,18 +76,18 @@ func (c *Contextx) JSON(v interface{}) error {
 
 func (c *Contextx) Finish(data interface{}, err error) error {
 	if err != nil {
-		c.Error(err, 500)
+		c.Error(err)
 		return err
 	}
 	return c.OK(data)
 }
 
-func (c *Contextx) Page(items interface{}, pageIndex, pageSize int, total int64, err error) error {
+func (c *Contextx) Page(items interface{}, pageIndex, pageSize, total int, err error) error {
 	if err != nil {
-		c.Error(err, 500)
+		c.Error(err)
 		return err
 	}
-	return c.OK(Page{PageIndex: pageIndex, PageSize: pageSize, Total: int(total), Items: items})
+	return c.OK(NewPage(items, pageIndex, pageSize, total))
 }
 
 func (c *Contextx) OK(data interface{}) error {
@@ -112,15 +112,30 @@ func (c *Contextx) FailService(message string, state int) error {
 // request parameter error
 func (c *Contextx) FailParams(fieldErrors map[string]string) error {
 	c.StatusCode(400)
-	return c.JSON(Result{State: 1, ErrorCode: "request parameter error", FieldErrors: fieldErrors})
+	return c.JSON(Result{State: 1, Error: "request parameter error", FieldErrors: fieldErrors})
 }
 
-func (c *Contextx) Error(err error, statusCode int) error {
+func (c *Contextx) Error(err error) error {
 	if err == nil {
 		return c.OK(nil)
 	}
+	r := Result{State: 1, Error: err.Error()}
+	statusCode := 500
+	if v, ok := err.(FieldErrorsGetter); ok {
+		statusCode = 400
+		r.FieldErrors = v.GetFieldErrors()
+	}
+	if v, ok := err.(StateGetter); ok {
+		r.State = v.GetState()
+	}
+	if v, ok := err.(ErrorCodeGetter); ok {
+		r.ErrorCode = v.GetErrorCode()
+	}
+	if v, ok := err.(HttpStatusCodeGetter); ok {
+		statusCode = v.GetHttpStatusCode()
+	}
 	c.StatusCode(statusCode)
-	return c.JSON(Result{State: 1, Error: err.Error()})
+	return c.JSON(r)
 }
 
 // request parameter error
@@ -133,8 +148,7 @@ func (c *Contextx) ErrorParam(err error) error {
 		}
 		return c.FailParams(fieldErrors)
 	}
-	c.StatusCode(400)
-	return c.JSON(Result{State: 1, Error: err.Error()})
+	return c.Error(err)
 }
 
 func (c *Contextx) GetIP() string {
