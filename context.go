@@ -1,6 +1,7 @@
 package irisx
 
 import (
+	"runtime/debug"
 	"strings"
 
 	"github.com/daqiancode/jsoniter"
@@ -115,12 +116,15 @@ func (c *Context) FailParams(fieldErrors map[string]string) error {
 	return c.JSON(Result{State: 1, Error: "request parameter error", FieldErrors: fieldErrors})
 }
 
-func (c *Context) Error(err error) error {
+// type stackTracer interface {
+// 	StackTrace() errors.StackTrace
+// }
+
+func (c *Context) Error(err error, statusCode int) error {
 	if err == nil {
 		return c.OK(nil)
 	}
 	r := Result{State: 1, Error: err.Error()}
-	statusCode := 500
 	if v, ok := err.(FieldErrorsGetter); ok {
 		statusCode = 400
 		r.FieldErrors = v.GetFieldErrors()
@@ -133,6 +137,10 @@ func (c *Context) Error(err error) error {
 	}
 	if v, ok := err.(HttpStatusCodeGetter); ok {
 		statusCode = v.GetHttpStatusCode()
+	}
+	c.Application().Logger().Error(err)
+	if statusCode >= 500 {
+		c.Application().Logger().Error(string(debug.Stack()))
 	}
 	c.StatusCode(statusCode)
 	return c.JSON(r)
