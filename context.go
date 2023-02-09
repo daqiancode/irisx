@@ -77,7 +77,7 @@ func (c *Context) JSON(v interface{}) error {
 
 func (c *Context) Finish(data interface{}, err error) error {
 	if err != nil {
-		c.Error(err)
+		c.Error(err, 500)
 		return err
 	}
 	return c.OK(data)
@@ -85,7 +85,7 @@ func (c *Context) Finish(data interface{}, err error) error {
 
 func (c *Context) Page(items interface{}, pageIndex, pageSize, total int, err error) error {
 	if err != nil {
-		c.Error(err)
+		c.Error(err, 500)
 		return err
 	}
 	return c.OK(NewPage(items, pageIndex, pageSize, total))
@@ -156,7 +156,7 @@ func (c *Context) ErrorParam(err error) error {
 		}
 		return c.FailParams(fieldErrors)
 	}
-	return c.Error(err)
+	return c.Error(err, 406)
 }
 
 func (c *Context) GetIP() string {
