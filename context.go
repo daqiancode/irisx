@@ -1,11 +1,9 @@
 package irisx
 
 import (
-	"runtime/debug"
 	"strings"
 
 	"github.com/daqiancode/jsoniter"
-	"github.com/go-playground/validator/v10"
 	"github.com/iris-contrib/schema"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
@@ -16,7 +14,14 @@ type Context struct {
 }
 
 var JSON = jsoniter.Decapitalized
+var IGNORE_ERR_PATH = true
 
+func HandleValidationErrors(err error) error {
+	if err == nil || IGNORE_ERR_PATH && iris.IsErrPath(err) {
+		return nil
+	}
+	return ParseValidationErrors(err)
+}
 func (c *Context) ReadJSON(outPtr interface{}) error {
 	body, restoreBody, err := context.GetBody(c.Request(), true)
 	if err != nil {
@@ -27,7 +32,8 @@ func (c *Context) ReadJSON(outPtr interface{}) error {
 	if err != nil {
 		return err
 	}
-	return c.Application().Validate(outPtr)
+	err = c.Application().Validate(outPtr)
+	return HandleValidationErrors(err)
 }
 func (c *Context) ReadQuery(ptr interface{}) error {
 	values := c.Request().URL.Query()
@@ -43,7 +49,7 @@ func (c *Context) ReadQuery(ptr interface{}) error {
 		return err
 	}
 
-	return c.Application().Validate(ptr)
+	return HandleValidationErrors(c.Application().Validate(ptr))
 }
 
 func (c *Context) ReadForm(formObject interface{}) error {
@@ -62,7 +68,7 @@ func (c *Context) ReadForm(formObject interface{}) error {
 	if err != nil {
 		return err
 	}
-	return c.Application().Validate(formObject)
+	return HandleValidationErrors(c.Application().Validate(formObject))
 }
 
 func (c *Context) JSON(v interface{}) error {
@@ -124,39 +130,19 @@ func (c *Context) Error(err error, statusCode int) error {
 	if err == nil {
 		return c.OK(nil)
 	}
-	r := Result{State: 1, Error: err.Error()}
-	if v, ok := err.(FieldErrorsGetter); ok {
-		statusCode = 400
-		r.FieldErrors = v.GetFieldErrors()
+	r := ParseError(err)
+	if r.HttpStatusCode != 0 {
+		c.StatusCode(r.HttpStatusCode)
+	} else {
+		c.StatusCode(statusCode)
 	}
-	if v, ok := err.(StateGetter); ok {
-		r.State = v.GetState()
-	}
-	if v, ok := err.(ErrorCodeGetter); ok {
-		r.ErrorCode = v.GetErrorCode()
-	}
-	if v, ok := err.(HttpStatusCodeGetter); ok {
-		statusCode = v.GetHttpStatusCode()
-	}
-	c.Application().Logger().Error(err)
-	if statusCode >= 500 {
-		c.Application().Logger().Error(string(debug.Stack()))
-	}
-	c.StatusCode(statusCode)
 	return c.JSON(r)
 }
 
 // request parameter error
 func (c *Context) ErrorParam(err error) error {
-	if es, ok := err.(validator.ValidationErrors); ok {
-		fieldErrors := make(map[string]string, len(es))
-		for _, v := range es {
-			fieldErrors[v.Field()] = v.ActualTag()
-			// fieldErrors[v.Field()] = v.Error()
-		}
-		return c.FailParams(fieldErrors)
-	}
-	return c.Error(err, 406)
+	e := ParseValidationErrors(err)
+	return c.Error(e, 422)
 }
 
 func (c *Context) GetIP() string {
