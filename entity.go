@@ -94,7 +94,7 @@ func ParseValidationErrors(err error) error {
 			fieldErrors[v.Field()] = v.ActualTag()
 			// fieldErrors[v.Field()] = v.Error()
 		}
-		return &ValidationErrors{FieldErrors: fieldErrors, Err: "validation error"}
+		return &ValidationErrors{FieldErrors: fieldErrors, Err: "request parameter error"}
 	}
 	return err
 }
