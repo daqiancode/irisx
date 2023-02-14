@@ -88,9 +88,9 @@ func (s ValidationErrors) GetFieldErrors() map[string]string {
 }
 
 func ParseValidationErrors(err error) error {
-	if es, ok := err.(*validator.ValidationErrors); ok {
-		fieldErrors := make(map[string]string, len(*es))
-		for _, v := range *es {
+	if es, ok := err.(validator.ValidationErrors); ok {
+		fieldErrors := make(map[string]string, len(es))
+		for _, v := range es {
 			fieldErrors[v.Field()] = v.ActualTag()
 			// fieldErrors[v.Field()] = v.Error()
 		}
