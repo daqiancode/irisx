@@ -5,7 +5,7 @@ extends iris
 
 ## Installation
 ```go
-go get github.com/daqiancode/irisx
+go get -u github.com/daqiancode/irisx@main
 
 ```
 
