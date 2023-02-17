@@ -43,7 +43,7 @@ func (s SignAlg) ParsePrivateKey(privateKey string) (interface{}, error) {
 		return jwt.ParsePrivateKeyEdDSA([]byte(processPrivateKey(privateKey)))
 	}
 	if strings.HasPrefix(string(s), "ES") {
-		return jwt.ParsePrivateKeyECDSA([]byte(privateKey))
+		return jwt.ParsePrivateKeyECDSA([]byte(processPrivateKey(privateKey)))
 	}
 	if strings.HasPrefix(string(s), "RS") || strings.HasPrefix(string(s), "PS") {
 		return jwt.ParsePrivateKeyRSA([]byte(privateKey))
@@ -59,7 +59,7 @@ func (s SignAlg) ParsePublicKey(publicKey string) (interface{}, error) {
 		return jwt.ParsePublicKeyEdDSA([]byte(processPublicKey(publicKey)))
 	}
 	if strings.HasPrefix(string(s), "ES") {
-		return jwt.ParsePublicKeyECDSA([]byte(publicKey))
+		return jwt.ParsePublicKeyECDSA([]byte(processPublicKey(publicKey)))
 	}
 	if strings.HasPrefix(string(s), "RS") || strings.HasPrefix(string(s), "PS") {
 		return jwt.ParsePublicKeyRSA([]byte(publicKey))

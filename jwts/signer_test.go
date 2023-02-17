@@ -35,3 +35,15 @@ func TestEdDSA(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, at.StandardClaims.Subject, "123")
 }
+
+func TestES256(t *testing.T) {
+	privateKey := `MHcCAQEEIBwtVzV00P8z7Jtj5jBSbgopZbr/tdh1KCiJ7uvVvVgtoAo
+	GCCqGSM49AwEHoUQDQgAECyM0x23QynOi9w9PtcUiLTfe0Nem9WnNFvjbYoEe8/ivD4/4oUNc/gS6bmtLGROjhm8qNQsepHuwBQDM+mVhIQ==`
+	publicKey := `MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECyM0x23QynOi9w9PtcUiLTfe0Nem9WnNFvjbYoEe8/ivD4/4oUNc/gS6bmtLGROjhm8qNQsepHuwBQDM+mVhIQ==`
+	r, err := jwts.GenerateTokenPair(jwts.SignAlg("ES256"), privateKey, "123", "ADMIN", "xxxxxxxx", 30*60, 24*3600)
+	assert.Nil(t, err)
+	fmt.Println(r)
+	at, err := jwts.JwtVerify([]byte(r.AccessToken), publicKey)
+	assert.Nil(t, err)
+	assert.Equal(t, at.StandardClaims.Subject, "123")
+}
