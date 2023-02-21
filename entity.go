@@ -6,9 +6,13 @@ type Result struct {
 	State          int               `json:"state"`
 	Data           interface{}       `json:"data,omitempty"`
 	ErrorCode      string            `json:"errorCode,omitempty"`
-	Error          string            `json:"error,omitempty"`
+	ErrorInfo      string            `json:"error,omitempty"`
 	FieldErrors    map[string]string `json:"fieldErrors,omitempty"`
 	HttpStatusCode int               `json:"-"`
+}
+
+func (s Result) Error() string {
+	return s.ErrorInfo
 }
 
 type Page struct {
@@ -57,7 +61,7 @@ func ParseError(err error) Result {
 	if err == nil {
 		return Result{}
 	}
-	r := Result{State: 1, Error: err.Error()}
+	r := Result{State: 1, ErrorInfo: err.Error()}
 	if v, ok := err.(FieldErrorsGetter); ok {
 		r.HttpStatusCode = ParameterErrorHttpStatusCode
 		r.FieldErrors = v.GetFieldErrors()
