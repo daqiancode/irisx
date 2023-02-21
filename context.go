@@ -119,7 +119,7 @@ func (c *Context) FailService(message string, state int) error {
 // request parameter error
 func (c *Context) FailParams(fieldErrors map[string]string) error {
 	c.StatusCode(422)
-	return c.JSON(Result{State: 1, Error: "request parameter error", FieldErrors: fieldErrors})
+	return c.JSON(Result{State: 1, ErrorInfo: "request parameter error", FieldErrors: fieldErrors})
 }
 
 // type stackTracer interface {
