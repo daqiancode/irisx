@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/daqiancode/irisx/jwts"
+	"my_iam/jwts"
 
 	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +13,7 @@ import (
 func TestHS256(t *testing.T) {
 	pk := "123456"
 	uid := "123"
-	r, err := jwts.GenerateTokenPair(jwts.SignAlg("HS256"), pk, uid, "ADMIN", "xxxxxxxx", 30*60, 24*3600)
+	r, err := jwts.GenerateTokenPair(jwts.SignAlg("HS256"), pk, uid, "ADMIN", "email", "xxxxxxxx", 30*60, 24*3600)
 	assert.Nil(t, err)
 	assert.True(t, len(r.AccessToken) > 0)
 	assert.True(t, len(r.RefreshToken) > 0)
@@ -28,7 +28,7 @@ func TestHS256(t *testing.T) {
 func TestEdDSA(t *testing.T) {
 	publicKey, privateKey, err := jwts.GenerateEdDSAKeyPair()
 	assert.Nil(t, err)
-	r, err := jwts.GenerateTokenPair(jwts.SignAlg("EdDSA"), privateKey, "123", "ADMIN", "xxxxxxxx", 30*60, 24*3600)
+	r, err := jwts.GenerateTokenPair(jwts.SignAlg("EdDSA"), privateKey, "123", "ADMIN", "email", "xxxxxxxx", 30*60, 24*3600)
 	assert.Nil(t, err)
 	fmt.Println(r)
 	at, err := jwts.JwtVerify([]byte(r.AccessToken), publicKey)
@@ -40,7 +40,7 @@ func TestES256(t *testing.T) {
 	privateKey := `MHcCAQEEIBwtVzV00P8z7Jtj5jBSbgopZbr/tdh1KCiJ7uvVvVgtoAo
 	GCCqGSM49AwEHoUQDQgAECyM0x23QynOi9w9PtcUiLTfe0Nem9WnNFvjbYoEe8/ivD4/4oUNc/gS6bmtLGROjhm8qNQsepHuwBQDM+mVhIQ==`
 	publicKey := `MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECyM0x23QynOi9w9PtcUiLTfe0Nem9WnNFvjbYoEe8/ivD4/4oUNc/gS6bmtLGROjhm8qNQsepHuwBQDM+mVhIQ==`
-	r, err := jwts.GenerateTokenPair(jwts.SignAlg("ES256"), privateKey, "123", "ADMIN", "xxxxxxxx", 30*60, 24*3600)
+	r, err := jwts.GenerateTokenPair(jwts.SignAlg("ES256"), privateKey, "123", "ADMIN", "email", "xxxxxxxx", 30*60, 24*3600)
 	assert.Nil(t, err)
 	fmt.Println(r)
 	at, err := jwts.JwtVerify([]byte(r.AccessToken), publicKey)
