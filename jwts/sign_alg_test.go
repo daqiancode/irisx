@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/daqiancode/irisx/jwts"
+	"my_iam/jwts"
+
 	"github.com/stretchr/testify/assert"
 )
 
