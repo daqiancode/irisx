@@ -30,7 +30,7 @@ var UUIDLen = 20
 // GenerateTokenPair generate access_token & refresh_token, roles are seperate by space .eg, "ADMIN SYSTEM"
 func GenerateTokenPair(alg SignAlg, privateKey, uid, roles, scope, encryptedPassword string, accessTokenMaxAge, refreshTokenMaxAge int64) (TokenPair, error) {
 	refreshTokenID := UUID(UUIDLen)
-	refreshToken, err := GenerateRefreshToken(alg, privateKey, uid, roles, scope, accessTokenMaxAge, refreshTokenID, encryptedPassword)
+	refreshToken, err := GenerateRefreshToken(alg, privateKey, uid, roles, scope, refreshTokenMaxAge, refreshTokenID, encryptedPassword)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -41,13 +41,13 @@ func GenerateTokenPair(alg SignAlg, privateKey, uid, roles, scope, encryptedPass
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func GenerateAccessToken(alg SignAlg, privateKey, uid, roles, scope string, accessTokenMaxAge int64, refreshTokenID string) (string, error) {
-	accessToken := AccessToken{Claims: jwt.Claims{ID: UUID(UUIDLen), Subject: uid, Expiry: time.Now().Unix() + accessTokenMaxAge}, Roles: roles, Scope: scope, Rid: refreshTokenID}
+func GenerateAccessToken(alg SignAlg, privateKey, uid, roles, scope string, maxAge int64, refreshTokenID string) (string, error) {
+	accessToken := AccessToken{Claims: jwt.Claims{ID: UUID(UUIDLen), Subject: uid, Expiry: time.Now().Unix() + maxAge}, Roles: roles, Scope: scope, Rid: refreshTokenID}
 	return Sign(alg, accessToken, privateKey)
 }
 
-func GenerateRefreshToken(alg SignAlg, privateKey, uid, roles, scope string, accessTokenMaxAge int64, refreshTokenID, encryptedPassword string) (string, error) {
-	expiry := time.Now().Unix() + accessTokenMaxAge
+func GenerateRefreshToken(alg SignAlg, privateKey, uid, roles, scope string, maxAge int64, refreshTokenID, encryptedPassword string) (string, error) {
+	expiry := time.Now().Unix() + maxAge
 	refreshToken := &RefreshToken{
 		Claims: jwt.Claims{ID: refreshTokenID, Subject: uid, Expiry: expiry},
 		Scope:  scope,
