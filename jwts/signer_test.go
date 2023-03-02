@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"my_iam/jwts"
-
+	"github.com/daqiancode/irisx/jwts"
 	"github.com/kataras/iris/v12/middleware/jwt"
 	"github.com/stretchr/testify/assert"
 )
@@ -46,4 +45,11 @@ func TestES256(t *testing.T) {
 	at, err := jwts.JwtVerify([]byte(r.AccessToken), publicKey)
 	assert.Nil(t, err)
 	assert.Equal(t, at.StandardClaims.Subject, "123")
+}
+
+type testStruct struct {
+	Email   string `validate:"email"`
+	Mobile  string
+	Captcha string `validate:"required,len=6"`
+	Name    string `validate:"min=4,max=6"`
 }

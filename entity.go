@@ -1,7 +1,5 @@
 package irisx
 
-import "github.com/go-playground/validator/v10"
-
 type Result struct {
 	State          int               `json:"state"`
 	Data           interface{}       `json:"data,omitempty"`
@@ -9,6 +7,8 @@ type Result struct {
 	ErrorInfo      string            `json:"error,omitempty"`
 	FieldErrors    map[string]string `json:"fieldErrors,omitempty"`
 	HttpStatusCode int               `json:"-"`
+	ErrorKey       string            `json:"-"` // error message key
+	ErrorParams    []any             `json:"-"` // error message params
 }
 
 func (s Result) Error() string {
@@ -40,6 +40,12 @@ func NewPage(items interface{}, pageIndex, pageSize, total int) Page {
 	}
 }
 
+type ErrorKeyGetter interface {
+	GetErrorKey() string
+}
+type ErrorParamsGetter interface {
+	GetErrorParams() []any
+}
 type ErrorCodeGetter interface {
 	GetErrorCode() string
 }
@@ -91,14 +97,23 @@ func (s ValidationErrors) GetFieldErrors() map[string]string {
 	return s.FieldErrors
 }
 
-func ParseValidationErrors(err error) error {
-	if es, ok := err.(validator.ValidationErrors); ok {
-		fieldErrors := make(map[string]string, len(es))
-		for _, v := range es {
-			fieldErrors[v.Field()] = v.ActualTag()
-			// fieldErrors[v.Field()] = v.Error()
+func decapitalize(s string) string {
+	bs := []byte(s)
+	i := 0
+	for ; i < len(s); i++ {
+		if !isUpper(s[i]) {
+			break
 		}
-		return &ValidationErrors{FieldErrors: fieldErrors, Err: "request parameter error"}
 	}
-	return err
+	if i != len(s) {
+		i--
+	}
+	for j := 0; j < i; j++ {
+		bs[j] += 32
+	}
+
+	return string(bs)
+}
+func isUpper(b byte) bool {
+	return b >= 'A' && b <= 'Z'
 }
