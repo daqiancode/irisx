@@ -105,9 +105,6 @@ func decapitalize(s string) string {
 			break
 		}
 	}
-	if i != len(s) {
-		i--
-	}
 	for j := 0; j < i; j++ {
 		bs[j] += 32
 	}
