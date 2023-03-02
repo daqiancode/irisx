@@ -146,12 +146,13 @@ func (c *Context) ErrorParam(err error) error {
 }
 
 func (c *Context) GetIP() string {
-	ip := c.GetHeader("X-Real-Ip")
-	if ip == "" {
-		ip = c.GetHeader("X-Forwarded-For")
-		if ip != "" {
-			return strings.TrimSpace(strings.Split(ip, ",")[0])
-		}
+	ip := c.GetHeader("X-Forwarded-For")
+	if ip != "" {
+		return strings.TrimSpace(strings.Split(ip, ",")[0])
+	}
+	ip = c.GetHeader("X-Real-Ip")
+	if ip != "" {
+		return ip
 	}
 	return c.Context.RemoteAddr()
 }
