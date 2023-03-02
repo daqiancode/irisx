@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/daqiancode/jsoniter"
+	"github.com/go-playground/validator/v10"
 	"github.com/iris-contrib/schema"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
@@ -14,14 +15,32 @@ type Context struct {
 }
 
 var JSON = jsoniter.Decapitalized
-var IGNORE_ERR_PATH = true
+var IgnoreErrPath = true
+var DecapitalizeErrorField = true
+var DefaultFieldErrorMsg = "field format error"
 
-func HandleValidationErrors(err error) error {
-	if err == nil || IGNORE_ERR_PATH && iris.IsErrPath(err) {
+func (s Context) HandleValidationErrors(err error) error {
+	if err == nil || IgnoreErrPath && iris.IsErrPath(err) {
 		return nil
 	}
-	return ParseValidationErrors(err)
+	var field string
+	if es, ok := err.(validator.ValidationErrors); ok {
+		fieldErrors := make(map[string]string, len(es))
+		for _, v := range es {
+			field = v.Field()
+			if DecapitalizeErrorField {
+				field = decapitalize(field)
+			}
+			fieldErrors[field] = s.Tr("error."+v.ActualTag(), v.Param())
+			if fieldErrors[field] == "" {
+				fieldErrors[field] = DefaultFieldErrorMsg
+			}
+		}
+		return &ValidationErrors{FieldErrors: fieldErrors, Err: "request parameter error"}
+	}
+	return err
 }
+
 func (c *Context) ReadJSON(outPtr interface{}) error {
 	body, restoreBody, err := context.GetBody(c.Request(), true)
 	if err != nil {
@@ -33,7 +52,7 @@ func (c *Context) ReadJSON(outPtr interface{}) error {
 		return err
 	}
 	err = c.Application().Validate(outPtr)
-	return HandleValidationErrors(err)
+	return c.HandleValidationErrors(err)
 }
 func (c *Context) ReadQuery(ptr interface{}) error {
 	values := c.Request().URL.Query()
@@ -49,7 +68,7 @@ func (c *Context) ReadQuery(ptr interface{}) error {
 		return err
 	}
 
-	return HandleValidationErrors(c.Application().Validate(ptr))
+	return c.HandleValidationErrors(c.Application().Validate(ptr))
 }
 
 func (c *Context) ReadForm(formObject interface{}) error {
@@ -68,7 +87,7 @@ func (c *Context) ReadForm(formObject interface{}) error {
 	if err != nil {
 		return err
 	}
-	return HandleValidationErrors(c.Application().Validate(formObject))
+	return c.HandleValidationErrors(c.Application().Validate(formObject))
 }
 
 func (c *Context) JSON(v interface{}) error {
@@ -141,8 +160,7 @@ func (c *Context) Error(err error, statusCode int) error {
 
 // request parameter error
 func (c *Context) ErrorParam(err error) error {
-	e := ParseValidationErrors(err)
-	return c.Error(e, 422)
+	return c.Error(c.HandleValidationErrors(err), 422)
 }
 
 func (c *Context) GetIP() string {
@@ -155,4 +173,27 @@ func (c *Context) GetIP() string {
 		return ip
 	}
 	return c.Context.RemoteAddr()
+}
+
+func (c *Context) TranslateError(err error) Result {
+	var r Result
+	if err == nil {
+		return r
+	}
+	r.State = 1
+	var msgKey string
+	var msgParams []any
+	if e, ok := err.(ErrorKeyGetter); ok {
+		msgKey = e.GetErrorKey()
+	}
+	if e, ok := err.(ErrorParamsGetter); ok {
+		msgParams = e.GetErrorParams()
+	}
+	msg := c.Tr(msgKey, msgParams...)
+	r.ErrorInfo = msg
+	e := c.HandleValidationErrors(err)
+	if ve, ok := e.(*ValidationErrors); ok {
+		r.FieldErrors = ve.FieldErrors
+	}
+	return r
 }
